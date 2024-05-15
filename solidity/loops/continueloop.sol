@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 contract ContinueExample {
     uint public oddSum;
     
+    // บวกเฉพาะเลขคี่
     function calculateOddSum(uint[] memory numbers) public {
         oddSum = 0;
         for(uint i = 0; i < numbers.length; i++) {
