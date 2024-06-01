@@ -5,5 +5,9 @@
   "license": "MIT",
   "dependencies": {
     "hardhat": "^2.22.4"
+  },
+  "devDependencies": {
+    "ethers": "^6.12.1",
+    "web3": "^4.9.0"
   }
 }
