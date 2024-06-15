@@ -8,7 +8,6 @@ import {
   useState
 } from 'react';
 import styled from 'styled-components';
-import GreeterArtifact from '../artifacts/contracts/Greeter.sol/Greeter.json';
 import MyTokenArtifact from '../artifacts/contracts/MyToken.sol/MyToken.json';
 import { Provider } from '../utils/provider';
 import { SectionDivider } from './SectionDivider';
@@ -53,11 +52,12 @@ export function Greeter(): ReactElement {
   const { library, active } = context;
 
   const [signer, setSigner] = useState<Signer>();
-  const [greeterContract, setGreeterContract] = useState<Contract>();
-  const [greeterContractAddr, setGreeterContractAddr] = useState<string>('');
-  const [greeting, setGreeting] = useState<string>('');
+  const [myTokenContract, setMyTokenContract] = useState<Contract>();
+  const [myTokenContractAddr, setGreeterContractAddr] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [symbol, setSymbol] = useState<string>('');
-  const [greetingInput, setGreetingInput] = useState<string>('');
+  const [tokenNameInput, setTokenNameInput] = useState<string>('');
+  const [tokenSymbolInput, setTokenSymbolInput] = useState<string>('');
 
   useEffect((): void => {
     if (!library) {
@@ -69,65 +69,60 @@ export function Greeter(): ReactElement {
   }, [library]);
 
   useEffect((): void => {
-    if (!greeterContract) {
+    if (!myTokenContract) {
       return ;
     }
 
-    async function getGreeting(greeterContract: Contract): Promise<void> {
-      const _greeting = await greeterContract.name();
+    async function getTokenName(myTokenContract: Contract): Promise<void> {
+      const _name = await myTokenContract.name();
 
-      if (_greeting !== greeting) {
-        setGreeting(_greeting);
+      if (_name !== name) {
+        setName(_name);
       }
     }
 
-    async function getGreetingSymbol(greeterContract: Contract): Promise<void> {
-      const _greeting = await greeterContract.symbol();
+    async function getTokenSymbol(myTokenContract: Contract): Promise<void> {
+      const _symbol = await myTokenContract.symbol();
 
-      if (_greeting !== symbol) {
-        setSymbol(_greeting);
+      if (_symbol !== symbol) {
+        setSymbol(_symbol);
       }
     }
 
-    getGreeting(greeterContract);
-    getGreetingSymbol(greeterContract);
-  }, [greeterContract, greeting]);
+    getTokenName(myTokenContract);
+    getTokenSymbol(myTokenContract);
+  }, [myTokenContract, name]);
 
   function handleDeployContract(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
-    // only deploy the Greeter contract one time, when a signer is defined
-    if (greeterContract || !signer) {
+    if (!signer) {
       return;
     }
 
-    async function deployGreeterContract(signer: Signer): Promise<void> {
-      // const Greeter = new ethers.ContractFactory(
-      //   GreeterArtifact.abi,
-      //   GreeterArtifact.bytecode,
-      //   signer
-      // );
+    async function deployMyTokenContract(signer: Signer, tokenNameInput: string, tokenSymbolInput: string): Promise<void> {
 
-      const Greeter = new ethers.ContractFactory(
+      const MyToken = new ethers.ContractFactory(
         MyTokenArtifact.abi,
         MyTokenArtifact.bytecode,
         signer
       )
 
       try {
-        // const greeterContract = await Greeter.deploy('Hello, Hardhat!');
-        const greeterContract = await Greeter.deploy("MyToken", "Symbol");
+        const myTokenContract = await MyToken.deploy(tokenNameInput, tokenSymbolInput);
 
-        await greeterContract.deployed();
+        await myTokenContract.deployed();
 
-        const greeting = await greeterContract.name();
+        const tokenName = await myTokenContract.name();
+        const tokenSymbol = await myTokenContract.symbol();
 
-        setGreeterContract(greeterContract);
-        setGreeting(greeting);
+        setMyTokenContract(myTokenContract);
+        setName(tokenName);
+        setSymbol(tokenSymbol);
 
-        window.alert(`Greeter deployed to: ${greeterContract.address}`);
+        window.alert(`My token deployed to: ${myTokenContract.address}`);
 
-        setGreeterContractAddr(greeterContract.address);
+        setGreeterContractAddr(myTokenContract.address);
       } catch (error: any) {
         window.alert(
           'Error!' + (error && error.message ? `\n\n${error.message}` : '')
@@ -135,57 +130,41 @@ export function Greeter(): ReactElement {
       }
     }
 
-    deployGreeterContract(signer);
+    deployMyTokenContract(signer, tokenNameInput, tokenSymbolInput);
   }
 
-  function handleGreetingChange(event: ChangeEvent<HTMLInputElement>): void {
+  function handleTokenNameChange(event: ChangeEvent<HTMLInputElement>): void {
     event.preventDefault();
-    setGreetingInput(event.target.value);
+    setTokenNameInput(event.target.value);
   }
 
-  function handleGreetingSubmit(event: MouseEvent<HTMLButtonElement>): void {
+  function handleTokenSymbolChange(event: ChangeEvent<HTMLInputElement>): void {
     event.preventDefault();
-
-    if (!greeterContract) {
-      window.alert('Undefined greeterContract');
-      return;
-    }
-
-    if (!greetingInput) {
-      window.alert('Greeting cannot be empty');
-      return;
-    }
-
-    async function submitGreeting(greeterContract: Contract): Promise<void> {
-      try {
-        const setGreetingTxn = await greeterContract.setGreeting(greetingInput);
-
-        await setGreetingTxn.wait();
-
-        const newGreeting = await greeterContract.name();
-        window.alert(`Success!\n\nGreeting is now: ${newGreeting}`);
-
-        if (newGreeting !== greeting) {
-          setGreeting(newGreeting);
-        }
-      } catch (error: any) {
-        window.alert(
-          'Error!' + (error && error.message ? `\n\n${error.message}` : '')
-        );
-      }
-    }
-
-    submitGreeting(greeterContract);
+    setTokenSymbolInput(event.target.value);
   }
 
   return (
     <>
+      <StyledGreetingDiv>
+        <StyledLabel htmlFor="tokenNameInput">Token Name</StyledLabel>
+        <StyledInput
+          id="tokenNameInput"
+          type="text"
+          placeholder={name ? 'name' : '<Contract not yet deployed>'}
+          onChange={handleTokenNameChange}
+          style={{ fontStyle: name ? 'normal' : 'italic' }}
+        ></StyledInput>
+        <div></div>
+        <StyledLabel htmlFor="tokenSymbolInput">Token Symbol</StyledLabel>
+        <StyledInput
+          id="tokenSymbolInput"
+          type="text"
+          placeholder={symbol ? 'symbol' : '<Contract not yet deployed>'}
+          onChange={handleTokenSymbolChange}
+          style={{ fontStyle: name ? 'normal' : 'italic' }}
+        ></StyledInput>
+      </StyledGreetingDiv>
       <StyledDeployContractButton
-        disabled={!active || greeterContract ? true : false}
-        style={{
-          cursor: !active || greeterContract ? 'not-allowed' : 'pointer',
-          borderColor: !active || greeterContract ? 'unset' : 'blue'
-        }}
         onClick={handleDeployContract}
       >
         Deploy My Token Contract
@@ -194,17 +173,17 @@ export function Greeter(): ReactElement {
       <StyledGreetingDiv>
         <StyledLabel>Contract addr</StyledLabel>
         <div>
-          {greeterContractAddr ? (
-            greeterContractAddr
+          {myTokenContractAddr ? (
+            myTokenContractAddr
           ) : (
             <em>{`<Contract not yet deployed>`}</em>
           )}
         </div>
         {/* empty placeholder div below to provide empty first row, 3rd col div for a 2x3 grid */}
         <div></div>
-        <StyledLabel>Toke name</StyledLabel>
+        <StyledLabel>Token name</StyledLabel>
         <div>
-          {greeting ? greeting : <em>{`<Contract not yet deployed>`}</em>}
+          {name ? name : <em>{`<Contract not yet deployed>`}</em>}
         </div>
         {/* empty placeholder div below to provide empty first row, 3rd col div for a 2x3 grid */}
         <div></div>
@@ -215,24 +194,6 @@ export function Greeter(): ReactElement {
         </div>
         {/* empty placeholder div below to provide empty first row, 3rd col div for a 2x3 grid */}
         <div></div>
-        {/* <StyledLabel htmlFor="greetingInput">Set new greeting</StyledLabel>
-        <StyledInput
-          id="greetingInput"
-          type="text"
-          placeholder={greeting ? '' : '<Contract not yet deployed>'}
-          onChange={handleGreetingChange}
-          style={{ fontStyle: greeting ? 'normal' : 'italic' }}
-        ></StyledInput> */}
-        {/* <StyledButton
-          disabled={!active || !greeterContract ? true : false}
-          style={{
-            cursor: !active || !greeterContract ? 'not-allowed' : 'pointer',
-            borderColor: !active || !greeterContract ? 'unset' : 'blue'
-          }}
-          onClick={handleGreetingSubmit}
-        >
-          Submit
-        </StyledButton> */}
       </StyledGreetingDiv>
     </>
   );
