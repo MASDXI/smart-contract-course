@@ -8,11 +8,21 @@ import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
 import './tasks/deploy';
+import { version } from 'process';
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.4',
+  solidity: {
+    version: "0.8.25",
+    settings: {
+      optimizer: {
+        enabled: false,
+        runs: 1000,
+      },
+      evmVersion: "berlin"
+    },
+  },
   paths: {
     artifacts: './frontend/src/artifacts'
   },
